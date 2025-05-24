@@ -29,6 +29,9 @@ export const WalletContextProvider: FC<WalletContextProviderProps> = ({ children
     // Use NEXT_PUBLIC_RPC_URL environment variable if available, otherwise default to clusterApiUrl
     const endpoint = useMemo(() => process.env.NEXT_PUBLIC_RPC_URL || clusterApiUrl(network), [network]);
 
+    // Log the endpoint being used for debugging
+    console.log("Using Solana RPC endpoint:", endpoint);
+
     const wallets = useMemo(
         () => [
             new PhantomWalletAdapter(),

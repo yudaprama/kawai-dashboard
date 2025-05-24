@@ -4,8 +4,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-// Removed unused Connection and LAMPORTS_PER_SOL imports
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, EpochInfo } from '@solana/web3.js'; // Added EpochInfo
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,8 @@ export default function Home() {
   const [kawaiiBalance, setKawaiiBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [epochInfo, setEpochInfo] = useState<EpochInfo | null>(null); // State for basic RPC test
+  const [basicRpcError, setBasicRpcError] = useState<string | null>(null); // State for basic RPC test error
 
   const hasSufficientKawaii = useMemo(() => {
     if (kawaiiBalance === null) return false;
@@ -32,8 +33,29 @@ export default function Home() {
     if (!connected || !publicKey || !connection) {
       setKawaiiBalance(null);
       setError(null);
+      setEpochInfo(null);
+      setBasicRpcError(null);
       return;
     }
+
+    // Function for basic RPC connectivity test
+    const testBasicRpc = async () => {
+        setBasicRpcError(null);
+        setEpochInfo(null);
+        console.log('Testing basic RPC call (getEpochInfo)...');
+        try {
+            const epoch = await connection.getEpochInfo('confirmed');
+            console.log('Basic RPC call successful:', epoch);
+            setEpochInfo(epoch);
+        } catch (err: unknown) {
+            console.error("Error during basic RPC call:", err);
+            if (err instanceof Error) {
+                setBasicRpcError(`Basic RPC call failed: ${err.message}`);
+            } else {
+                setBasicRpcError('Basic RPC call failed due to an unknown error.');
+            }
+        }
+    };
 
     const checkKawaiiBalance = async () => {
       setIsLoading(true);
@@ -52,17 +74,13 @@ export default function Home() {
         for (const { account } of tokenAccounts.value) {
           const parsedAccountInfo = account.data.parsed.info;
           if (parsedAccountInfo.mint === KAWAII_TOKEN_MINT.toBase58()) {
-            // Use uiAmountNumber for direct comparison if available and accurate
-            // Or calculate from amount and decimals
             foundBalance = parsedAccountInfo.tokenAmount.uiAmountNumber || (parseInt(parsedAccountInfo.tokenAmount.amount) / Math.pow(10, KAWAII_DECIMALS));
-            break; // Assume only one account for this mint per owner for simplicity
+            break;
           }
         }
         setKawaiiBalance(foundBalance);
-      // Changed 'any' to 'unknown' for better type safety
-      } catch (err: unknown) { 
+      } catch (err: unknown) {
         console.error("Error fetching token balance:", err);
-        // Type check for Error object
         if (err instanceof Error) {
             setError(`Failed to fetch KAWAII token balance: ${err.message}`);
         } else {
@@ -74,6 +92,8 @@ export default function Home() {
       }
     };
 
+    // Run both checks
+    testBasicRpc();
     checkKawaiiBalance();
 
   }, [connected, publicKey, connection]);
@@ -94,13 +114,27 @@ export default function Home() {
                 <p className="text-lg font-medium break-all">{publicKey.toBase58()}</p>
               </div>
 
+              {/* Display basic RPC test results */}
+              {basicRpcError && (
+                <Alert variant="destructive">
+                  <AlertTitle>RPC Connection Test Error</AlertTitle>
+                  <AlertDescription>{basicRpcError}</AlertDescription>
+                </Alert>
+              )}
+              {epochInfo && (
+                 <Alert variant="default">
+                  <AlertTitle>RPC Connection Test OK</AlertTitle>
+                  <AlertDescription>Successfully fetched Epoch: {epochInfo.epoch}</AlertDescription>
+                </Alert>
+              )}
+
               {isLoading && (
                 <p className="text-sm text-muted-foreground">Checking KAWAII token balance...</p>
               )}
 
               {error && (
                 <Alert variant="destructive">
-                  <AlertTitle>Error</AlertTitle>
+                  <AlertTitle>Token Balance Error</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
@@ -108,17 +142,16 @@ export default function Home() {
               {!isLoading && !error && kawaiiBalance !== null && (
                 <>
                   {hasSufficientKawaii ? (
-                    <Alert variant="default"> {/* Use default for success */}
+                    <Alert variant="default">
                       <AlertTitle>Access Granted!</AlertTitle>
                       <AlertDescription>
-                        You hold {kawaiiBalance.toFixed(2)} $KAWAII.
+                        You hold {kawaiiBalance.toFixed(2)} $KAWII.
                         <br />
                         <span className="font-mono text-sm bg-muted p-1 rounded">Dummy Access Token: GRANTED</span>
                       </AlertDescription>
                     </Alert>
                   ) : (
-                    // Use default variant for insufficient balance (non-destructive info)
-                    <Alert> 
+                    <Alert>
                       <AlertTitle>Insufficient KAWAII Balance</AlertTitle>
                       <AlertDescription>
                         You hold {kawaiiBalance.toFixed(2)} $KAWAII. You need at least {REQUIRED_KAWAII_AMOUNT_UI} $KAWAII to proceed.
