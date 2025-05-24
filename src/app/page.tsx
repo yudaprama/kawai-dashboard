@@ -18,20 +18,20 @@ const KAWAI_DECIMALS = 9;
 export default function Home() {
   const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
-  const [kawaiBalance, setKawaiiBalance] = useState<number | null>(null);
+  const [kawaiBalance, setKawaiBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [epochInfo, setEpochInfo] = useState<EpochInfo | null>(null); // State for basic RPC test
   const [basicRpcError, setBasicRpcError] = useState<string | null>(null); // State for basic RPC test error
 
-  const hasSufficientKawaii = useMemo(() => {
+  const hasSufficientKawai = useMemo(() => {
     if (kawaiBalance === null) return false;
     return kawaiBalance >= REQUIRED_KAWAI_AMOUNT_UI;
   }, [kawaiBalance]);
 
   useEffect(() => {
     if (!connected || !publicKey || !connection) {
-      setKawaiiBalance(null);
+      setKawaiBalance(null);
       setError(null);
       setEpochInfo(null);
       setBasicRpcError(null);
@@ -57,10 +57,10 @@ export default function Home() {
         }
     };
 
-    const checkKawaiiBalance = async () => {
+    const checkKawaiBalance = async () => {
       setIsLoading(true);
       setError(null);
-      setKawaiiBalance(null);
+      setKawaiBalance(null);
       try {
         const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
           publicKey,
@@ -78,7 +78,7 @@ export default function Home() {
             break;
           }
         }
-        setKawaiiBalance(foundBalance);
+        setKawaiBalance(foundBalance);
       } catch (err: unknown) {
         console.error("Error fetching token balance:", err);
         if (err instanceof Error) {
@@ -86,7 +86,7 @@ export default function Home() {
         } else {
             setError('Failed to fetch KAWAI token balance due to an unknown error.');
         }
-        setKawaiiBalance(null);
+        setKawaiBalance(null);
       } finally {
         setIsLoading(false);
       }
@@ -94,7 +94,7 @@ export default function Home() {
 
     // Run both checks
     testBasicRpc();
-    checkKawaiiBalance();
+    checkKawaiBalance();
 
   }, [connected, publicKey, connection]);
 
@@ -141,7 +141,7 @@ export default function Home() {
 
               {!isLoading && !error && kawaiBalance !== null && (
                 <>
-                  {hasSufficientKawaii ? (
+                  {hasSufficientKawai ? (
                     <Alert variant="default">
                       <AlertTitle>Access Granted!</AlertTitle>
                       <AlertDescription>
