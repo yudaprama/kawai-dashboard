@@ -11,23 +11,23 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExternalLink } from 'lucide-react';
 
-const KAWAII_TOKEN_MINT = new PublicKey('CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7');
-const REQUIRED_KAWAII_AMOUNT_UI = 100;
-const KAWAII_DECIMALS = 9;
+const KAWAI_TOKEN_MINT = new PublicKey('CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7');
+const REQUIRED_KAWAI_AMOUNT_UI = 100;
+const KAWAI_DECIMALS = 9;
 
 export default function Home() {
   const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
-  const [kawaiiBalance, setKawaiiBalance] = useState<number | null>(null);
+  const [kawaiBalance, setKawaiiBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [epochInfo, setEpochInfo] = useState<EpochInfo | null>(null); // State for basic RPC test
   const [basicRpcError, setBasicRpcError] = useState<string | null>(null); // State for basic RPC test error
 
   const hasSufficientKawaii = useMemo(() => {
-    if (kawaiiBalance === null) return false;
-    return kawaiiBalance >= REQUIRED_KAWAII_AMOUNT_UI;
-  }, [kawaiiBalance]);
+    if (kawaiBalance === null) return false;
+    return kawaiBalance >= REQUIRED_KAWAI_AMOUNT_UI;
+  }, [kawaiBalance]);
 
   useEffect(() => {
     if (!connected || !publicKey || !connection) {
@@ -73,8 +73,8 @@ export default function Home() {
         let foundBalance = 0;
         for (const { account } of tokenAccounts.value) {
           const parsedAccountInfo = account.data.parsed.info;
-          if (parsedAccountInfo.mint === KAWAII_TOKEN_MINT.toBase58()) {
-            foundBalance = parsedAccountInfo.tokenAmount.uiAmountNumber || (parseInt(parsedAccountInfo.tokenAmount.amount) / Math.pow(10, KAWAII_DECIMALS));
+          if (parsedAccountInfo.mint === KAWAI_TOKEN_MINT.toBase58()) {
+            foundBalance = parsedAccountInfo.tokenAmount.uiAmountNumber || (parseInt(parsedAccountInfo.tokenAmount.amount) / Math.pow(10, KAWAI_DECIMALS));
             break;
           }
         }
@@ -82,9 +82,9 @@ export default function Home() {
       } catch (err: unknown) {
         console.error("Error fetching token balance:", err);
         if (err instanceof Error) {
-            setError(`Failed to fetch KAWAII token balance: ${err.message}`);
+            setError(`Failed to fetch KAWAI token balance: ${err.message}`);
         } else {
-            setError('Failed to fetch KAWAII token balance due to an unknown error.');
+            setError('Failed to fetch KAWAI token balance due to an unknown error.');
         }
         setKawaiiBalance(null);
       } finally {
@@ -102,7 +102,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-24 bg-background">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center">KAWAII Token Gate</CardTitle>
+          <CardTitle className="text-center">KAWAI Token Gate</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center space-y-6">
           <WalletMultiButton className="w-full" />
@@ -129,7 +129,7 @@ export default function Home() {
               )}
 
               {isLoading && (
-                <p className="text-sm text-muted-foreground">Checking KAWAII token balance...</p>
+                <p className="text-sm text-muted-foreground">Checking KAWAI token balance...</p>
               )}
 
               {error && (
@@ -139,22 +139,22 @@ export default function Home() {
                 </Alert>
               )}
 
-              {!isLoading && !error && kawaiiBalance !== null && (
+              {!isLoading && !error && kawaiBalance !== null && (
                 <>
                   {hasSufficientKawaii ? (
                     <Alert variant="default">
                       <AlertTitle>Access Granted!</AlertTitle>
                       <AlertDescription>
-                        You hold {kawaiiBalance.toFixed(2)} $KAWII.
+                        You hold {kawaiBalance.toFixed(2)} $KAWII.
                         <br />
                         <span className="font-mono text-sm bg-muted p-1 rounded">Dummy Access Token: GRANTED</span>
                       </AlertDescription>
                     </Alert>
                   ) : (
                     <Alert>
-                      <AlertTitle>Insufficient KAWAII Balance</AlertTitle>
+                      <AlertTitle>Insufficient KAWAI Balance</AlertTitle>
                       <AlertDescription>
-                        You hold {kawaiiBalance.toFixed(2)} $KAWAII. You need at least {REQUIRED_KAWAII_AMOUNT_UI} $KAWAII to proceed.
+                        You hold {kawaiBalance.toFixed(2)} $KAWAI. You need at least {REQUIRED_KAWAI_AMOUNT_UI} $KAWAI to proceed.
                         <div className="mt-3 flex flex-col sm:flex-row justify-center gap-2">
                           <Button variant="outline" size="sm" asChild>
                             <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7" target="_blank" rel="noopener noreferrer">
