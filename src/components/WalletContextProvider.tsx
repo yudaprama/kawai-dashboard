@@ -23,15 +23,16 @@ interface WalletContextProviderProps {
 
 export const WalletContextProvider: FC<WalletContextProviderProps> = ({ children }) => {
     // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
-    const network = WalletAdapterNetwork.Devnet;
+    const network = WalletAdapterNetwork.Mainnet; // Changed to Mainnet
 
     // You can also provide a custom RPC endpoint.
+    // Consider using a reliable mainnet RPC endpoint if needed
     const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
     const wallets = useMemo(
         () => [
             new PhantomWalletAdapter(),
-            new SolflareWalletAdapter({ network }),
+            new SolflareWalletAdapter({ network }), // Pass network to Solflare if needed
             new BackpackWalletAdapter(),
             // Add other wallet adapters here
             // new UnsafeBurnerWalletAdapter(), // Example for testing
