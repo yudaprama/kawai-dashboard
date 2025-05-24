@@ -21,8 +21,6 @@ export default function Home() {
   const [kawaiBalance, setKawaiBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [epochInfo, setEpochInfo] = useState<EpochInfo | null>(null); // State for basic RPC test
-  const [basicRpcError, setBasicRpcError] = useState<string | null>(null); // State for basic RPC test error
 
   const hasSufficientKawai = useMemo(() => {
     if (kawaiBalance === null) return false;
@@ -33,29 +31,8 @@ export default function Home() {
     if (!connected || !publicKey || !connection) {
       setKawaiBalance(null);
       setError(null);
-      setEpochInfo(null);
-      setBasicRpcError(null);
       return;
     }
-
-    // Function for basic RPC connectivity test
-    const testBasicRpc = async () => {
-        setBasicRpcError(null);
-        setEpochInfo(null);
-        console.log('Testing basic RPC call (getEpochInfo)...');
-        try {
-            const epoch = await connection.getEpochInfo('confirmed');
-            console.log('Basic RPC call successful:', epoch);
-            setEpochInfo(epoch);
-        } catch (err: unknown) {
-            console.error("Error during basic RPC call:", err);
-            if (err instanceof Error) {
-                setBasicRpcError(`Basic RPC call failed: ${err.message}`);
-            } else {
-                setBasicRpcError('Basic RPC call failed due to an unknown error.');
-            }
-        }
-    };
 
     const checkKawaiBalance = async () => {
       setIsLoading(true);
@@ -93,7 +70,6 @@ export default function Home() {
     };
 
     // Run both checks
-    testBasicRpc();
     checkKawaiBalance();
 
   }, [connected, publicKey, connection]);
@@ -113,20 +89,6 @@ export default function Home() {
                 <p className="text-sm text-muted-foreground">Connected Wallet:</p>
                 <p className="text-lg font-medium break-all">{publicKey.toBase58()}</p>
               </div>
-
-              {/* Display basic RPC test results */}
-              {basicRpcError && (
-                <Alert variant="destructive">
-                  <AlertTitle>RPC Connection Test Error</AlertTitle>
-                  <AlertDescription>{basicRpcError}</AlertDescription>
-                </Alert>
-              )}
-              {epochInfo && (
-                 <Alert variant="default">
-                  <AlertTitle>RPC Connection Test OK</AlertTitle>
-                  <AlertDescription>Successfully fetched Epoch: {epochInfo.epoch}</AlertDescription>
-                </Alert>
-              )}
 
               {isLoading && (
                 <p className="text-sm text-muted-foreground">Checking KAWAI token balance...</p>
