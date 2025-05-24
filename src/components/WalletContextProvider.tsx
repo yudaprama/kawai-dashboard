@@ -26,8 +26,8 @@ export const WalletContextProvider: FC<WalletContextProviderProps> = ({ children
     const network = WalletAdapterNetwork.Mainnet; // Changed to Mainnet
 
     // You can also provide a custom RPC endpoint.
-    // Consider using a reliable mainnet RPC endpoint if needed
-    const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+    // Use NEXT_PUBLIC_RPC_URL environment variable if available, otherwise default to clusterApiUrl
+    const endpoint = useMemo(() => process.env.NEXT_PUBLIC_RPC_URL || clusterApiUrl(network), [network]);
 
     const wallets = useMemo(
         () => [
