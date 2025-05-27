@@ -1,5 +1,6 @@
 
 import { WalletContextProvider } from "@/components/WalletContextProvider";
+import { ThemeProvider } from "@/components/theme-provider"; // Import ThemeProvider
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -7,8 +8,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Solana Wallet Connector",
-  description: "Connect to Solana wallets using shadcn/ui",
+  title: "KAWAI Dashboard", // Updated title
+  description: "Login and access the KAWAI ecosystem", // Updated description
 };
 
 export default function RootLayout({
@@ -17,11 +18,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning> {/* Add suppressHydrationWarning for next-themes */}
       <body className={inter.className}>
-        <WalletContextProvider>
-          {children}
-        </WalletContextProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <WalletContextProvider>
+            {children}
+          </WalletContextProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

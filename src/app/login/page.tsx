@@ -1,4 +1,5 @@
 import { GalleryVerticalEnd } from "lucide-react"
+import Image from "next/image"; // Import next/image
 
 import { LoginForm } from "@/components/login-form"
 
@@ -21,12 +22,17 @@ export default function LoginPage() {
         </div>
       </div>
       <div className="relative hidden bg-muted lg:block">
-        <img
-          src="/placeholder.svg"
-          alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+        {/* Replace img with next/image */}
+        <Image
+          src="/placeholder.svg" // Assuming placeholder.svg is in public directory
+          alt="Login Cover Image"
+          layout="fill" // Use fill layout
+          objectFit="cover" // Use object-cover
+          className="dark:brightness-[0.2] dark:grayscale"
+          priority // Add priority if it's above the fold
         />
       </div>
     </div>
   )
 }
+
