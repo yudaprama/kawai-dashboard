@@ -1,144 +1,94 @@
-
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ExternalLink } from 'lucide-react';
-
-const KAWAI_TOKEN_MINT = new PublicKey('CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7');
-const REQUIRED_KAWAI_AMOUNT_UI = 100;
-const KAWAI_DECIMALS = 9;
 
 export default function Home() {
-  const { connection } = useConnection();
-  const { publicKey, connected } = useWallet();
-  const [kawaiBalance, setKawaiBalance] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const hasSufficientKawai = useMemo(() => {
-    if (kawaiBalance === null) return false;
-    return kawaiBalance >= REQUIRED_KAWAI_AMOUNT_UI;
-  }, [kawaiBalance]);
-
-  useEffect(() => {
-    if (!connected || !publicKey || !connection) {
-      setKawaiBalance(null);
-      setError(null);
-      return;
-    }
-
-    const checkKawaiBalance = async () => {
-      setIsLoading(true);
-      setError(null);
-      setKawaiBalance(null);
-      try {
-        const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
-          publicKey,
-          {
-            programId: TOKEN_PROGRAM_ID,
-          },
-          'confirmed'
-        );
-
-        let foundBalance = 0;
-        for (const { account } of tokenAccounts.value) {
-          const parsedAccountInfo = account.data.parsed.info;
-          if (parsedAccountInfo.mint === KAWAI_TOKEN_MINT.toBase58()) {
-            foundBalance = parsedAccountInfo.tokenAmount.uiAmountNumber || (parseInt(parsedAccountInfo.tokenAmount.amount) / Math.pow(10, KAWAI_DECIMALS));
-            break;
-          }
-        }
-        setKawaiBalance(foundBalance);
-      } catch (err: unknown) {
-        console.error("Error fetching token balance:", err);
-        if (err instanceof Error) {
-            setError(`Failed to fetch KAWAI token balance: ${err.message}`);
-        } else {
-            setError('Failed to fetch KAWAI token balance due to an unknown error.');
-        }
-        setKawaiBalance(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    // Run both checks
-    checkKawaiBalance();
-
-  }, [connected, publicKey, connection]);
-
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-24 bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-center">KAWAI Token Gate</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center space-y-6">
-          <WalletMultiButton className="w-full" />
-
-          {connected && publicKey && (
-            <div className="w-full text-center space-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Connected Wallet:</p>
-                <p className="text-lg font-medium break-all">{publicKey.toBase58()}</p>
-              </div>
-
-              {isLoading && (
-                <p className="text-sm text-muted-foreground">Checking KAWAI token balance...</p>
-              )}
-
-              {error && (
-                <Alert variant="destructive">
-                  <AlertTitle>Token Balance Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              {!isLoading && !error && kawaiBalance !== null && (
-                <>
-                  {hasSufficientKawai ? (
-                    <Alert variant="default">
-                      <AlertTitle>Access Granted!</AlertTitle>
-                      <AlertDescription>
-                        You hold {kawaiBalance.toFixed(2)} $KAWII.
-                        <br />
-                        <span className="font-mono text-sm bg-muted p-1 rounded">Dummy Access Token: GRANTED</span>
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <Alert>
-                      <AlertTitle>Insufficient KAWAI Balance</AlertTitle>
-                      <AlertDescription>
-                        You hold {kawaiBalance.toFixed(2)} $KAWAI. You need at least {REQUIRED_KAWAI_AMOUNT_UI} $KAWAI to proceed.
-                        <div className="mt-3 flex flex-col sm:flex-row justify-center gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7" target="_blank" rel="noopener noreferrer">
-                              Buy on Raydium <ExternalLink className="ml-1 h-4 w-4" />
-                            </a>
-                          </Button>
-                          <Button variant="outline" size="sm" asChild>
-                            <a href="https://www.orca.so/pools/5x6DLbiMMpioqpyFcCixxD7EY9EabyypjA7Uc7xNvvRk" target="_blank" rel="noopener noreferrer">
-                              Buy on Orca <ExternalLink className="ml-1 h-4 w-4" />
-                            </a>
-                          </Button>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-black text-white">
+      <div className="w-full max-w-6xl mx-auto">
+        {/* Header with logo */}
+        <div className="flex justify-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">KAWAI</h1>
+        </div>
+        
+        {/* Main content */}
+        <div className="flex flex-col items-center">
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">The Bitcoin of AI Computation</h2>
+            <p className="text-lg text-gray-400 max-w-2xl">
+              Choose your path in the KAWAI ecosystem
+            </p>
+          </div>
+          
+          {/* Mascot image */}
+          <div className="relative w-48 h-48 mb-8">
+            <Image 
+              src="/kawai-mascot.png" 
+              alt="KAWAI Mascot" 
+              fill
+              style={{ objectFit: 'contain' }}
+              priority
+            />
+          </div>
+          
+          {/* Cards for Agent and Provider */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+            {/* Agent Card */}
+            <Card className="bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative w-full h-48 mb-4">
+                    <Image 
+                      src="/kawai-agent/kawai-agent-1.png" 
+                      alt="KAWAI Agent Interface" 
+                      fill
+                      style={{ objectFit: 'contain' }}
+                    />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">KAWAI Agent</h3>
+                  <p className="text-gray-400 mb-6">
+                    Access AI agents powered by KAWAI's decentralized computation network
+                  </p>
+                  <Button asChild className="w-full bg-blue-600 hover:bg-blue-700">
+                    <Link href="/agent-login">
+                      Login as Agent User
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Provider Card */}
+            <Card className="bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700 hover:border-orange-500 transition-all duration-300 overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative w-full h-48 mb-4">
+                    <Image 
+                      src="/kawai-provider/kawai-provider-1.png" 
+                      alt="KAWAI Provider Interface" 
+                      fill
+                      style={{ objectFit: 'contain' }}
+                    />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">KAWAI Provider</h3>
+                  <p className="text-gray-400 mb-6">
+                    Earn KAWAI tokens by providing computational resources to the network
+                  </p>
+                  <Button asChild className="w-full bg-orange-600 hover:bg-orange-700">
+                    <Link href="/provider-login">
+                      Login as Provider
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
-
