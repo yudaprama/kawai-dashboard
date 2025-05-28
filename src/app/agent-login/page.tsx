@@ -9,9 +9,27 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ExternalLink, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ExternalLink, AlertCircle, CheckCircle2, Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/theme-toggle";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+const agentScreenshots = [
+  '/kawai-agent/kawai-agent-1.png',
+  '/kawai-agent/kawai-agent-2.png',
+  '/kawai-agent/kawai-agent-3.png',
+];
 
 export default function AgentLogin() {
   const { publicKey, connected } = useWallet();
@@ -69,28 +87,54 @@ export default function AgentLogin() {
 
   return (
     <div className="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
-      {/* Left side - Cover Image */}
-      <div className="relative hidden bg-muted lg:block">
-        <Image
-          src="/kawai-agent/kawai-agent-1.png" // Use agent screenshot
-          alt="KAWAI Agent Interface"
-          layout="fill"
-          objectFit="cover"
-          className="dark:brightness-[0.3] dark:grayscale"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-        <div className="absolute bottom-10 left-10 text-white p-4 bg-black/50 rounded-lg">
-          <h3 className="text-2xl font-bold">KAWAI Agent</h3>
-          <p className="text-lg">Access AI agents powered by KAWAI&apos;s decentralized computation network.</p>
-        </div>
+      {/* Left side - Cover Carousel */}
+      <div className="relative hidden bg-muted lg:flex lg:items-center lg:justify-center p-10">
+        <Carousel className="w-full max-w-md xl:max-w-lg">
+          <CarouselContent>
+            {agentScreenshots.map((src, index) => (
+              <CarouselItem key={index} className="relative aspect-video group">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <div className="relative w-full h-full cursor-pointer">
+                      <Image
+                        src={src}
+                        alt={`KAWAI Agent Screenshot ${index + 1}`}
+                        layout="fill"
+                        objectFit="contain" // Show full window
+                        className="rounded-md"
+                      />
+                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md">
+                        <Expand className="h-8 w-8 text-white" />
+                      </div>
+                    </div>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[80vw] h-[80vh] p-0 bg-transparent border-none flex items-center justify-center">
+                    <Image
+                      src={src}
+                      alt={`KAWAI Agent Screenshot ${index + 1} Full Preview`}
+                      layout="fill"
+                      objectFit="contain"
+                    />
+                  </DialogContent>
+                </Dialog>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2" />
+          <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2" />
+        </Carousel>
+         <div className="absolute bottom-10 left-10 right-10 text-center text-white p-4 bg-black/50 rounded-lg z-10">
+           <h3 className="text-xl font-bold">KAWAI Agent</h3>
+           <p className="text-md">Access AI agents powered by KAWAI&apos;s decentralized computation network.</p>
+         </div>
       </div>
 
       {/* Right side - Login Logic */}
-      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+        <div className="absolute top-4 right-4">
+           <ModeToggle />
+        </div>
         <div className="mx-auto grid w-[350px] gap-6">
-          <div className="absolute top-4 right-4">
-            <ModeToggle />
-          </div>
           <div className="grid gap-2 text-center">
             <Link href="/" className="flex items-center justify-center gap-2 font-semibold mb-4">
               <Image src="/kawai-mascot.png" alt="KAWAI Mascot" width={32} height={32} />
@@ -109,6 +153,7 @@ export default function AgentLogin() {
                 <p className="text-center text-sm text-muted-foreground">
                   Connect your Solana wallet to verify KAWAI token ownership.
                 </p>
+                {/* Use WalletMultiButton directly for simplicity */}
                 <WalletMultiButton className="w-full wallet-adapter-button-trigger" />
               </div>
             ) : (
