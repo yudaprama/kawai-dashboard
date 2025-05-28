@@ -86,9 +86,9 @@ export default function ProviderLogin() {
 
   return (
     <div className="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
-      {/* Left side - Cover Carousel */}
-      <div className="relative hidden bg-muted lg:flex lg:items-center lg:justify-center p-10">
-        <Carousel className="w-full max-w-md xl:max-w-lg">
+      {/* Left side - Cover Carousel - Removed padding, increased max-width */}
+      <div className="relative hidden bg-muted lg:flex lg:items-center lg:justify-center p-4"> {/* Reduced padding */}
+        <Carousel className="w-full max-w-xl xl:max-w-3xl"> {/* Increased max-width */}
           <CarouselContent>
             {providerScreenshots.map((src, index) => (
               <CarouselItem key={index} className="relative aspect-video group">
@@ -107,7 +107,7 @@ export default function ProviderLogin() {
                       </div>
                     </div>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[80vw] h-[80vh] p-0 bg-transparent border-none flex items-center justify-center">
+                  <DialogContent className="sm:max-w-[90vw] h-[90vh] p-0 bg-transparent border-none flex items-center justify-center"> {/* Adjusted modal size */}
                     <Image
                       src={src}
                       alt={`KAWAI Provider Screenshot ${index + 1} Full Preview`}
@@ -119,12 +119,13 @@ export default function ProviderLogin() {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2" />
-          <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2" />
+          {/* Adjusted button positioning */}
+          <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10" />
+          <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10" />
         </Carousel>
-         <div className="absolute bottom-10 left-10 right-10 text-center text-white p-4 bg-black/50 rounded-lg z-10">
-           <h3 className="text-xl font-bold">KAWAI Provider</h3>
-           <p className="text-md">Earn KAWAI tokens by providing computational resources to the network.</p>
+         <div className="absolute bottom-4 left-4 right-4 text-center text-white p-3 bg-black/60 rounded-lg z-10"> {/* Adjusted padding/position */}
+           <h3 className="text-lg font-bold">KAWAI Provider</h3>
+           <p className="text-sm">Earn KAWAI tokens by providing computational resources to the network.</p>
          </div>
       </div>
 
