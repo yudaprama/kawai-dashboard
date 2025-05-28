@@ -136,10 +136,6 @@ export default function ProviderLogin() {
          </div>
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
-            <Link href="/" className="flex items-center justify-center gap-2 font-semibold mb-4">
-              <Image src="/kawai-mascot.png" alt="KAWAI Mascot" width={32} height={32} />
-              <span className="text-2xl font-bold">KAWAI</span>
-            </Link>
             <h1 className="text-3xl font-bold">Provider Login</h1>
             <p className="text-balance text-muted-foreground">
               Connect your wallet to access the KAWAI Provider Dashboard
@@ -150,9 +146,6 @@ export default function ProviderLogin() {
           <div className="grid gap-4">
             {!connected ? (
               <div className="flex flex-col items-center gap-4">
-                <p className="text-center text-sm text-muted-foreground">
-                  Connect your Solana wallet to verify KAWAI token ownership.
-                </p>
                 <WalletMultiButton className="w-full wallet-adapter-button-trigger" />
               </div>
             ) : (
