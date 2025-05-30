@@ -1,0 +1,271 @@
+openapi: 3.0.3
+info:
+  title: Kawaii Auth API
+  version: 1.0.0
+  description: API for user registration and authentication with encrypted session header
+servers:
+  - url: https://auth.getkawai.com
+paths:
+  /register:
+    post:
+      summary: Register a new user
+      description: Registers a new user. Requires X-Kawai-Session header with AES-GCM encrypted value of 'kawaii-ok'.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - address
+                - password
+              properties:
+                address:
+                  type: string
+                  description: User address
+                password:
+                  type: string
+                  description: User password
+      parameters:
+        - in: header
+          name: X-Kawai-Session
+          required: true
+          schema:
+            type: string
+          description: AES-GCM encrypted value of 'kawaii-ok' using secret key 'getElementsByTagName', base64 encoded (iv + ciphertext)
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Bad request (missing fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Unauthorized (missing or invalid kawaii session)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '409':
+          description: Conflict (address already registered)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /login:
+    post:
+      summary: Login with address and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - address
+                - password
+              properties:
+                address:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/AuthResponse'
+                  - type: object
+                    properties:
+                      access_token:
+                        type: string
+        '400':
+          description: Bad request (missing fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '404':
+          description: Address not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /introspect:
+    post:
+      summary: Introspect a JWT access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Token introspection result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active:
+                    type: boolean
+                  payload:
+                    type: object
+                    description: Token payload (if active)
+                  reason:
+                    type: string
+                    description: Reason for inactive token (if not active)
+        '400':
+          description: No token provided
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active:
+                    type: boolean
+                  reason:
+                    type: string
+        '500':
+          description: Introspection error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active:
+                    type: boolean
+                  reason:
+                    type: string
+  /cleanup:
+    post:
+      summary: Delete a user by address (for tests)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - address
+              properties:
+                address:
+                  type: string
+      responses:
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Address is required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '500':
+          description: Cleanup error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+  /message:
+    get:
+      summary: Basic hello endpoint
+      responses:
+        '200':
+          description: Returns hello message
+          content:
+            text/plain:
+              schema:
+                type: string
+  /address-exists:
+    get:
+      summary: Check if address exists
+      description: Checks if a user address is already registered.
+      parameters:
+        - in: query
+          name: address
+          required: true
+          schema:
+            type: string
+          description: The address to check for existence
+      responses:
+        '200':
+          description: Address existence result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+        '400':
+          description: Address is required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+                  message:
+                    type: string
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+                  message:
+                    type: string
+components:
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        access_token:
+          type: string 

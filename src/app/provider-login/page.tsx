@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -24,17 +23,32 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { encryptKawaiiSession } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 const providerScreenshots = [
   '/kawai-provider/kawai-provider-1.png',
   '/kawai-provider/kawai-provider-2.png',
 ];
 
+// Helper to get the auth API base URL from env
+function getAuthUrl() {
+  return process.env.NEXT_AUTH_URL || 'https://auth.getkawai.com';
+}
+
 export default function ProviderLogin() {
   const { publicKey, connected } = useWallet();
   const [hasEnoughTokens, setHasEnoughTokens] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // New state for address existence and auth
+  const [addressExists, setAddressExists] = useState<null | boolean>(null);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [password, setPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const KAWAI_TOKEN_ADDRESS = 'CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7';
   const MINIMUM_TOKENS_REQUIRED = 100;
@@ -83,6 +97,67 @@ export default function ProviderLogin() {
       checkTokenBalance();
     }
   }, [publicKey, connected]);
+
+  // Check if address exists after balance is sufficient
+  useEffect(() => {
+    if (hasEnoughTokens && publicKey) {
+      setAddressExists(null);
+      setError(null);
+      setIsLoading(true);
+      fetch(`${getAuthUrl()}/address-exists?address=${publicKey.toString()}`)
+        .then(res => res.json())
+        .then(data => {
+          setAddressExists(!!data.exists);
+          setShowAuthDialog(true);
+        })
+        .catch(() => setError("Failed to check address existence."))
+        .finally(() => setIsLoading(false));
+    }
+  }, [hasEnoughTokens, publicKey]);
+
+  // Handle registration or login
+  async function handleAuthSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      if (!publicKey) throw new Error("No wallet address");
+      const address = publicKey.toString();
+      if (addressExists === false) {
+        // Register
+        const session = await encryptKawaiiSession();
+        const res = await fetch(`${getAuthUrl()}/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Kawai-Session': session,
+          },
+          body: JSON.stringify({ address, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Registration failed');
+        setAccessToken(data.access_token || null);
+        setShowAuthDialog(false);
+        window.location.href = "/provider-dashboard";
+      } else if (addressExists === true) {
+        // Login
+        const res = await fetch(`${getAuthUrl()}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Login failed');
+        setAccessToken(data.access_token || null);
+        setShowAuthDialog(false);
+        window.location.href = "/provider-dashboard";
+      }
+    } catch (err: any) {
+      setAuthError(err.message);
+    } finally {
+      setAuthLoading(false);
+    }
+  }
 
   return (
     <div className="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
@@ -158,7 +233,7 @@ export default function ProviderLogin() {
                 {isLoading ? (
                   <div className="flex flex-col items-center my-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
-                    <p className="text-sm text-muted-foreground">Verifying KAWAI token balance...</p>
+                    <p className="text-sm text-muted-foreground">Checking status...</p>
                   </div>
                 ) : error ? (
                   <Alert variant="destructive" className="w-full">
@@ -172,12 +247,9 @@ export default function ProviderLogin() {
                       <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                       <AlertTitle className="text-green-800 dark:text-green-300">Access Granted!</AlertTitle>
                       <AlertDescription className="text-green-700 dark:text-green-400">
-                        You have the required KAWAI tokens. Your access token: GRANTED
+                        You have the required KAWAI tokens. Please authenticate to continue.
                       </AlertDescription>
                     </Alert>
-                    <Link href="/provider-dashboard" className="w-full">
-                      <Button className="w-full bg-orange-600 hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-800">Continue to Provider Dashboard</Button>
-                    </Link>
                   </>
                 ) : (
                   <>
@@ -214,6 +286,30 @@ export default function ProviderLogin() {
                     </div>
                   </>
                 )}
+
+                {/* Auth Dialog for Register/Login */}
+                <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+                  <DialogContent className="max-w-sm w-full">
+                    <form onSubmit={handleAuthSubmit} className="space-y-4">
+                      <h2 className="text-xl font-bold text-center">
+                        {addressExists === false ? 'Register' : addressExists === true ? 'Login' : 'Authenticate'}
+                      </h2>
+                      <Input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        required
+                        autoFocus
+                        disabled={authLoading}
+                      />
+                      {authError && <div className="text-red-500 text-sm text-center">{authError}</div>}
+                      <Button type="submit" className="w-full" disabled={authLoading || !password}>
+                        {authLoading ? 'Processing...' : addressExists === false ? 'Register' : 'Login'}
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </div>
             )}
           </div>
