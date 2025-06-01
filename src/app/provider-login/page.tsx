@@ -48,7 +48,6 @@ export default function ProviderLogin() {
   const [password, setPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const KAWAI_TOKEN_ADDRESS = 'CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7';
   const MINIMUM_TOKENS_REQUIRED = 100;
@@ -136,7 +135,6 @@ export default function ProviderLogin() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Registration failed');
-        setAccessToken(data.access_token || null);
         setShowAuthDialog(false);
         window.location.href = "/provider-dashboard";
       } else if (addressExists === true) {
@@ -148,12 +146,11 @@ export default function ProviderLogin() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Login failed');
-        setAccessToken(data.access_token || null);
         setShowAuthDialog(false);
         window.location.href = "/provider-dashboard";
       }
-    } catch (err: any) {
-      setAuthError(err.message);
+    } catch (err: unknown) {
+      setAuthError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setAuthLoading(false);
     }
