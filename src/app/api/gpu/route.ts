@@ -17,8 +17,24 @@ export async function GET() {
   // Calculate additional hours using API data
   const additionalHours = hoursSinceBase * growthRate;
   
-  // Return the random number as JSON
-  return NextResponse.json({
+  // Create the response with the data
+  const response = NextResponse.json({
     hours: baseValue + additionalHours 
   });
+  
+  // Add CORS headers
+  response.headers.set('Access-Control-Allow-Origin', 'https://getkawai.com');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  
+  return response;
+}
+
+// Handle OPTIONS requests for CORS preflight
+export async function OPTIONS() {
+  const response = new NextResponse(null, { status: 204 });
+  response.headers.set('Access-Control-Allow-Origin', 'https://getkawai.com');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  return response;
 } 
