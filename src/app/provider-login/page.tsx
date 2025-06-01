@@ -50,7 +50,7 @@ export default function ProviderLogin() {
   const [authError, setAuthError] = useState<string | null>(null);
 
   const KAWAI_TOKEN_ADDRESS = 'CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7';
-  const MINIMUM_TOKENS_REQUIRED = 100;
+  const MINIMUM_TOKENS_REQUIRED = 1000;
 
   useEffect(() => {
     const checkTokenBalance = async () => {
@@ -197,7 +197,7 @@ export default function ProviderLogin() {
         </Carousel>
          <div className="absolute bottom-4 left-4 right-4 text-center text-white p-3 bg-black/60 rounded-lg z-10"> {/* Adjusted padding/position */}
            <h3 className="text-lg font-bold">KAWAI Provider</h3>
-           <p className="text-sm">Earn KAWAI tokens by providing computational resources to the network.</p>
+           <p className="text-sm">Launch a node and earn KAWAI tokens by providing computational resources to the network.</p>
          </div>
       </div>
 
@@ -210,7 +210,7 @@ export default function ProviderLogin() {
           <div className="grid gap-2 text-center">
             <h1 className="text-3xl font-bold">Provider Login</h1>
             <p className="text-balance text-muted-foreground">
-              Connect your wallet to access the KAWAI Provider Dashboard
+              Connect your wallet to launch a KAWAI node and earn rewards
             </p>
           </div>
 
@@ -244,7 +244,7 @@ export default function ProviderLogin() {
                       <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                       <AlertTitle className="text-green-800 dark:text-green-300">Access Granted!</AlertTitle>
                       <AlertDescription className="text-green-700 dark:text-green-400">
-                        You have the required KAWAI tokens. Please authenticate to continue.
+                        You have the required KAWAI tokens to launch a node. Please authenticate to continue.
                       </AlertDescription>
                     </Alert>
                   </>
@@ -254,7 +254,7 @@ export default function ProviderLogin() {
                       <AlertCircle className="h-4 w-4" />
                       <AlertTitle>Insufficient KAWAI Balance</AlertTitle>
                       <AlertDescription>
-                        You need at least {MINIMUM_TOKENS_REQUIRED} KAWAI tokens to access the Provider Dashboard.
+                        You need at least {MINIMUM_TOKENS_REQUIRED} KAWAI tokens to launch a node and become a provider.
                       </AlertDescription>
                     </Alert>
                     <div className="flex flex-col space-y-2 w-full">
