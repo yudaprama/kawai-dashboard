@@ -1,29 +1,34 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  // Base value
-  const baseValue = 18764;
+  // Base values
+  const baseGpuHours = 18764;
+  const baseNodes = 15;
   
   // Time-based growth (starting from Jan 1, 2024)
   const baseDate = new Date('2024-01-01').getTime();
   const now = new Date().getTime();
   
-  // Calculate days since base date (more stable than hours)
+  // Calculate time periods
   const daysSinceBase = Math.floor((now - baseDate) / (1000 * 60 * 60 * 24));
+  const monthsSinceBase = Math.floor(daysSinceBase / 30);
   
-  // Apply a moderate daily growth rate (5-10 hours per day)
+  // GPU Hours calculation
   const dailyGrowthRate = 7;
-  const timeBasedGrowth = daysSinceBase * dailyGrowthRate;
+  const timeBasedHoursGrowth = daysSinceBase * dailyGrowthRate;
+  const hoursRandomVariation = Math.floor(Math.random() * 20) - 5;
+  const totalGpuHours = baseGpuHours + timeBasedHoursGrowth + hoursRandomVariation;
   
-  // Add a small random variation (-5 to +15)
-  const randomVariation = Math.floor(Math.random() * 20) - 5;
+  // Active Nodes calculation
+  const monthlyNodesGrowthRate = 2;
+  const timeBasedNodesGrowth = monthsSinceBase * monthlyNodesGrowthRate;
+  const nodesRandomVariation = Math.floor(Math.random() * 31) - 15;
+  const totalActiveNodes = Math.max(5, baseNodes + timeBasedNodesGrowth + nodesRandomVariation);
   
-  // Calculate final hours value
-  const totalHours = baseValue + timeBasedGrowth + randomVariation;
-  
-  // Create the response
+  // Create the response with both metrics
   const response = NextResponse.json({
-    hours: totalHours
+    gpuHours: totalGpuHours,
+    activeNodes: totalActiveNodes
   });
   
   // Add CORS headers
