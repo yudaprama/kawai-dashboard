@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   // Base values
-  const baseGpuHours = 18764;
+  const baseGpuHours = 11764;
   const baseNodes = 15;
+  const baseTasks = 50000;
   
   // Time-based growth (starting from Jan 1, 2024)
   const baseDate = new Date('2024-01-01').getTime();
@@ -24,11 +25,18 @@ export async function GET() {
   const timeBasedNodesGrowth = monthsSinceBase * monthlyNodesGrowthRate;
   const nodesRandomVariation = Math.floor(Math.random() * 31) - 15;
   const totalActiveNodes = Math.max(5, baseNodes + timeBasedNodesGrowth + nodesRandomVariation);
+
+  // Total Task Completed calculation
+  const dailyTasksGrowthRate = 120;
+  const timeBasedTasksGrowth = daysSinceBase * dailyTasksGrowthRate;
+  const tasksRandomVariation = Math.floor(Math.random() * 201) - 100; // -100 to +100
+  const totalTaskCompleted = Math.max(0, baseTasks + timeBasedTasksGrowth + tasksRandomVariation);
   
-  // Create the response with both metrics
+  // Create the response with all metrics
   const response = NextResponse.json({
     gpuHours: totalGpuHours,
-    activeNodes: totalActiveNodes
+    activeNodes: totalActiveNodes,
+    totalTaskCompleted: totalTaskCompleted
   });
   
   // Add CORS headers
