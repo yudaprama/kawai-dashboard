@@ -28,11 +28,11 @@ export default function NavBar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 backdrop-blur-sm bg-background/80">
+    <nav className="fixed top-0 left-0 right-0 z-40 backdrop-blur-sm bg-background/80 border-b border-border">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <Link href="https://getkawai.com" className="text-2xl font-bold flex items-center text-white">
+          <Link href="https://getkawai.com" className="text-2xl font-bold flex items-center">
             <Image 
               src="/kawai-red.png" 
               alt="KAWAI Logo" 
@@ -49,7 +49,7 @@ export default function NavBar() {
           <div className="hidden md:flex items-center space-x-4">
             <Link 
               href="https://getkawai.com/docs" 
-              className="text-white hover:text-cyan-200 flex items-center" 
+              className="text-foreground hover:text-primary flex items-center" 
               aria-label="KAWAI Documentation"
             >
               <svg 
@@ -88,7 +88,7 @@ export default function NavBar() {
                 e.stopPropagation();
                 setIsMobileMenuOpen(!isMobileMenuOpen);
               }} 
-              className="text-white hover:text-cyan-200 focus:outline-none"
+              className="text-foreground hover:text-primary focus:outline-none"
             >
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
@@ -113,12 +113,12 @@ export default function NavBar() {
       {isMobileMenuOpen && (
         <div 
           onClick={handleMenuClick}
-          className="md:hidden bg-gray-800 py-2 px-4 absolute w-full z-50"
+          className="md:hidden bg-popover py-2 px-4 absolute w-full z-50"
         >
           <div className="flex flex-col space-y-3">
             <Link 
               href="https://getkawai.com/docs" 
-              className="text-white hover:text-cyan-200 py-2 flex items-center"
+              className="text-foreground hover:text-primary py-2 flex items-center"
             >
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
