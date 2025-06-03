@@ -8,30 +8,6 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-black text-white">
       <div className="w-full max-w-6xl mx-auto flex flex-col items-center">
-        {/* Header with logo */}
-        <div className="mb-6">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">KAWAI</h1>
-        </div>
-        
-        {/* Main heading */}
-        <h2 className="text-3xl md:text-4xl font-bold mb-4 text-center">The Bitcoin of AI Computation</h2>
-        
-        {/* Subheading */}
-        <p className="text-lg text-gray-400 mb-12 text-center">
-          Choose your path in the KAWAI ecosystem
-        </p>
-        
-        {/* Mascot image */}
-        <div className="relative w-48 h-48 mb-12">
-          <Image 
-            src="/kawai-mascot.png" 
-            alt="KAWAI Mascot" 
-            fill
-            style={{ objectFit: 'contain' }}
-            priority
-          />
-        </div>
-        
         {/* Cards for Agent and Provider */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
           {/* Agent Card */}
