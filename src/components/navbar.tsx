@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ModeToggle } from "@/components/theme-toggle";
 
 export default function NavBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -27,7 +28,7 @@ export default function NavBar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 backdrop-blur-sm">
+    <nav className="fixed top-0 left-0 right-0 z-40 backdrop-blur-sm bg-background/80">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
@@ -45,7 +46,7 @@ export default function NavBar() {
           </Link>
           
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-4">
             <Link 
               href="https://getkawai.com/docs" 
               className="text-white hover:text-cyan-200 flex items-center" 
@@ -61,6 +62,7 @@ export default function NavBar() {
               </svg>
               <span className="ml-1">Documentation</span>
             </Link>
+            <ModeToggle />
             <Link 
               href="https://app.getkawai.com" 
               target="_blank" 
@@ -79,7 +81,8 @@ export default function NavBar() {
           </div>
           
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center space-x-2">
+            <ModeToggle />
             <button 
               onClick={(e) => {
                 e.stopPropagation();
