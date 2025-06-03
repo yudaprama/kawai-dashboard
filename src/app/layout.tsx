@@ -1,5 +1,6 @@
 import { WalletContextProvider } from "@/components/WalletContextProvider";
 import { ThemeProvider } from "@/components/theme-provider";
+import NavBar from "@/components/navbar";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -27,7 +28,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <WalletContextProvider>
-            {children}
+            <NavBar />
+            <div className="pt-20">
+              {children}
+            </div>
           </WalletContextProvider>
         </ThemeProvider>
       </body>
