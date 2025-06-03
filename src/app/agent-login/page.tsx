@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -11,7 +10,6 @@ import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExternalLink, AlertCircle, CheckCircle2, Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ModeToggle } from "@/components/theme-toggle";
 import {
   Carousel,
   CarouselContent,
@@ -28,7 +26,6 @@ import {
 const agentScreenshots = [
   '/kawai-agent/kawai-agent-1.png',
   '/kawai-agent/kawai-agent-2.png',
-  '/kawai-agent/kawai-agent-3.png',
 ];
 
 export default function AgentLogin() {
@@ -88,7 +85,7 @@ export default function AgentLogin() {
   return (
     <div className="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
       {/* Left side - Cover Carousel - Removed padding, increased max-width */}
-      <div className="relative hidden bg-muted lg:flex lg:items-center lg:justify-center p-4"> {/* Reduced padding */}
+      <div className="relative hidden bg-card lg:flex lg:items-center lg:justify-center p-4"> {/* Changed bg-muted to bg-card */}
         <Carousel className="w-full max-w-xl xl:max-w-3xl"> {/* Increased max-width */}
           <CarouselContent>
             {agentScreenshots.map((src, index) => (
@@ -124,17 +121,14 @@ export default function AgentLogin() {
           <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10" />
           <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10" />
         </Carousel>
-         <div className="absolute bottom-4 left-4 right-4 text-center text-white p-3 bg-black/60 rounded-lg z-10"> {/* Adjusted padding/position */}
+         <div className="absolute bottom-4 left-4 right-4 text-center bg-blue-600 text-white p-3 rounded-lg z-10"> {/* Changed from bg-black/60 to bg-blue-600 */}
            <h3 className="text-lg font-bold">KAWAI Agent</h3>
            <p className="text-sm">Access AI agents powered by KAWAI&apos;s decentralized computation network.</p>
          </div>
       </div>
 
       {/* Right side - Login Logic */}
-      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
-        <div className="absolute top-4 right-4">
-           <ModeToggle />
-        </div>
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
             <h1 className="text-3xl font-bold">Agent Login</h1>
