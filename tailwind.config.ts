@@ -10,8 +10,8 @@ export default {
   theme: {
   	extend: {
   		colors: {
-        'kawai-red': '#FF3B30',
-        'kawai-red-dark': '#E62F24',
+				'kawai-red': '#FF385C',
+        'kawai-red-dark': '#D81A44',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
