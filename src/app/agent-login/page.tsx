@@ -8,7 +8,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ExternalLink, AlertCircle, CheckCircle2, Expand } from "lucide-react";
+import { ExternalLink, AlertCircle, CheckCircle2, Expand, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -29,13 +29,34 @@ const agentScreenshots = [
 ];
 
 export default function AgentLogin() {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, signMessage } = useWallet();
   const [hasEnoughTokens, setHasEnoughTokens] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
   const KAWAI_TOKEN_ADDRESS = 'CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7';
   const MINIMUM_TOKENS_REQUIRED = 100;
+
+  // Check for existing session on component mount
+  useEffect(() => {
+    const storedToken = localStorage.getItem('kawai_auth_token');
+    const storedExpiry = localStorage.getItem('kawai_auth_expiry');
+    
+    if (storedToken && storedExpiry) {
+      const expiryTime = parseInt(storedExpiry);
+      if (Date.now() < expiryTime) {
+        setAuthToken(storedToken);
+        setIsAuthenticated(true);
+      } else {
+        // Clear expired token
+        localStorage.removeItem('kawai_auth_token');
+        localStorage.removeItem('kawai_auth_expiry');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const checkTokenBalance = async () => {
@@ -82,11 +103,65 @@ export default function AgentLogin() {
     }
   }, [publicKey, connected]);
 
+  const handleWalletLogin = async () => {
+    if (!publicKey || !signMessage) {
+      setError('Wallet not properly connected');
+      return;
+    }
+
+    setIsAuthenticating(true);
+    setError(null);
+
+    try {
+      // Create authentication message
+      const timestamp = Date.now();
+      const nonce = Math.random().toString(36).substring(2, 15);
+      const message = `Login to KAWAI Agent Dashboard\n\nWallet: ${publicKey.toString()}\nTimestamp: ${timestamp}\nNonce: ${nonce}`;
+      
+      const encodedMessage = new TextEncoder().encode(message);
+      const signature = await signMessage(encodedMessage);
+
+      // Convert signature to base64 for storage/transmission
+      const signatureBase64 = Buffer.from(signature).toString('base64');
+      
+      // Create a simple authentication token (in production, this should be validated by backend)
+      const authPayload = {
+        wallet: publicKey.toString(),
+        timestamp,
+        nonce,
+        signature: signatureBase64
+      };
+      
+      const token = Buffer.from(JSON.stringify(authPayload)).toString('base64');
+      
+      // Store authentication token with 24-hour expiry
+      const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+      localStorage.setItem('kawai_auth_token', token);
+      localStorage.setItem('kawai_auth_expiry', expiryTime.toString());
+      
+      setAuthToken(token);
+      setIsAuthenticated(true);
+      
+    } catch (err) {
+      console.error('Authentication failed:', err);
+      setError('Failed to authenticate. Please try again.');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('kawai_auth_token');
+    localStorage.removeItem('kawai_auth_expiry');
+    setAuthToken(null);
+    setIsAuthenticated(false);
+  };
+
   return (
     <div className="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
-      {/* Left side - Cover Carousel - Removed padding, increased max-width */}
-      <div className="relative hidden bg-card lg:flex lg:items-center lg:justify-center p-4"> {/* Changed bg-muted to bg-card */}
-        <Carousel className="w-full max-w-xl xl:max-w-3xl"> {/* Increased max-width */}
+      {/* Left side - Cover Carousel */}
+      <div className="relative hidden bg-card lg:flex lg:items-center lg:justify-center p-4">
+        <Carousel className="w-full max-w-xl xl:max-w-3xl">
           <CarouselContent>
             {agentScreenshots.map((src, index) => (
               <CarouselItem key={index} className="relative aspect-video group">
@@ -97,7 +172,7 @@ export default function AgentLogin() {
                         src={src}
                         alt={`KAWAI Agent Screenshot ${index + 1}`}
                         layout="fill"
-                        objectFit="contain" // Show full window
+                        objectFit="contain"
                         className="rounded-md"
                       />
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md">
@@ -105,7 +180,7 @@ export default function AgentLogin() {
                       </div>
                     </div>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[90vw] h-[90vh] p-0 bg-transparent border-none flex items-center justify-center"> {/* Adjusted modal size */}
+                  <DialogContent className="sm:max-w-[90vw] h-[90vh] p-0 bg-transparent border-none flex items-center justify-center">
                     <Image
                       src={src}
                       alt={`KAWAI Agent Screenshot ${index + 1} Full Preview`}
@@ -117,11 +192,10 @@ export default function AgentLogin() {
               </CarouselItem>
             ))}
           </CarouselContent>
-          {/* Adjusted button positioning */}
           <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10" />
           <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10" />
         </Carousel>
-         <div className="absolute bottom-4 left-4 right-4 text-center bg-blue-600 text-white p-3 rounded-lg z-10"> {/* Changed from bg-black/60 to bg-blue-600 */}
+         <div className="absolute bottom-4 left-4 right-4 text-center bg-blue-600 text-white p-3 rounded-lg z-10">
            <h3 className="text-lg font-bold">KAWAI Agent</h3>
            <p className="text-sm">Access AI agents powered by KAWAI&apos;s decentralized computation network.</p>
          </div>
@@ -131,21 +205,24 @@ export default function AgentLogin() {
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
-            <h1 className="text-3xl font-bold">Agent Login</h1>
+            <h1 className="text-3xl font-bold">Login with Wallet</h1>
             <p className="text-balance text-muted-foreground">
-              Connect your wallet to access the KAWAI Agent Dashboard
+              Connect your wallet and authenticate to access the KAWAI Agent Dashboard
             </p>
           </div>
 
-          {/* Wallet Connection and Status */}
+          {/* Wallet Connection and Authentication Flow */}
           <div className="grid gap-4">
             {!connected ? (
               <div className="flex flex-col items-center gap-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  Step 1: Connect your Solana wallet
+                </p>
                 <WalletMultiButton className="w-full wallet-adapter-button-trigger" />
               </div>
             ) : (
               <div className="flex flex-col items-center gap-4">
-                <h3 className="text-lg font-semibold">Wallet Connected</h3>
+                <h3 className="text-lg font-semibold">✅ Wallet Connected</h3>
                 <p className="text-sm text-muted-foreground break-all w-full text-center">
                   {publicKey?.toString()}
                 </p>
@@ -165,14 +242,56 @@ export default function AgentLogin() {
                   <>
                     <Alert variant="default" className="w-full bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700">
                       <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      <AlertTitle className="text-green-800 dark:text-green-300">Access Granted!</AlertTitle>
+                      <AlertTitle className="text-green-800 dark:text-green-300">✅ Token Balance Verified</AlertTitle>
                       <AlertDescription className="text-green-700 dark:text-green-400">
-                        You have the required KAWAI tokens. Your access token: GRANTED
+                        You have the required KAWAI tokens to proceed.
                       </AlertDescription>
                     </Alert>
-                    <Link href="/agent-dashboard" className="w-full">
-                      <Button className="w-full">Continue to Agent Dashboard</Button>
-                    </Link>
+
+                    {/* Authentication Step */}
+                    {!isAuthenticated ? (
+                      <div className="flex flex-col items-center gap-4 w-full">
+                        <p className="text-sm text-muted-foreground text-center">
+                          Step 2: Sign message to authenticate your wallet ownership
+                        </p>
+                        <Button 
+                          onClick={handleWalletLogin}
+                          disabled={isAuthenticating}
+                          className="w-full"
+                        >
+                          {isAuthenticating ? (
+                            <div className="flex items-center">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Authenticating...
+                            </div>
+                          ) : (
+                            <div className="flex items-center">
+                              <Key className="mr-2 h-4 w-4" />
+                              Sign Message to Login
+                            </div>
+                          )}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-4 w-full">
+                        <Alert variant="default" className="w-full bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700">
+                          <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <AlertTitle className="text-blue-800 dark:text-blue-300">🎉 Authentication Successful!</AlertTitle>
+                          <AlertDescription className="text-blue-700 dark:text-blue-400">
+                            Welcome! You are now authenticated and can access the Agent Dashboard.
+                          </AlertDescription>
+                        </Alert>
+                        
+                        <div className="flex flex-col gap-2 w-full">
+                          <Link href="/agent-dashboard" className="w-full">
+                            <Button className="w-full">Continue to Agent Dashboard</Button>
+                          </Link>
+                          <Button variant="outline" onClick={handleLogout} className="w-full">
+                            Logout
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
