@@ -22,18 +22,11 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { encryptKawaiiSession } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
 
 const providerScreenshots = [
   '/kawai-provider/kawai-provider-1.png',
   '/kawai-provider/kawai-provider-2.png',
 ];
-
-// Helper to get the auth API base URL from env
-function getAuthUrl() {
-  return process.env.NEXT_AUTH_URL || 'https://auth.getkawai.com';
-}
 
 export default function ProviderLogin() {
   const { publicKey, connected, signMessage } = useWallet();
@@ -43,7 +36,6 @@ export default function ProviderLogin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [authToken, setAuthToken] = useState<string | null>(null);
 
   const KAWAI_TOKEN_ADDRESS = 'CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7';
 
@@ -55,7 +47,6 @@ export default function ProviderLogin() {
     if (storedToken && storedExpiry) {
       const expiryTime = parseInt(storedExpiry);
       if (Date.now() < expiryTime) {
-        setAuthToken(storedToken);
         setIsAuthenticated(true);
       } else {
         // Clear expired token
@@ -151,7 +142,6 @@ export default function ProviderLogin() {
       localStorage.setItem('kawai_provider_auth_token', token);
       localStorage.setItem('kawai_provider_auth_expiry', expiryTime.toString());
       
-      setAuthToken(token);
       setIsAuthenticated(true);
       
     } catch (err) {
@@ -165,7 +155,6 @@ export default function ProviderLogin() {
   const handleLogout = () => {
     localStorage.removeItem('kawai_provider_auth_token');
     localStorage.removeItem('kawai_provider_auth_expiry');
-    setAuthToken(null);
     setIsAuthenticated(false);
   };
 

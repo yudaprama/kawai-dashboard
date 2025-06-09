@@ -128,7 +128,7 @@ export default function DashboardSelector() {
                         <CardTitle>Agent Dashboard</CardTitle>
                       </div>
                       <CardDescription>
-                        Access AI agents powered by KAWAI's decentralized network
+                        Access AI agents powered by KAWAI&apos;s decentralized network
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -206,7 +206,7 @@ export default function DashboardSelector() {
                         <CardTitle>Agent Dashboard</CardTitle>
                       </div>
                       <CardDescription>
-                        Access AI agents powered by KAWAI's decentralized network
+                        Access AI agents powered by KAWAI&apos;s decentralized network
                       </CardDescription>
                     </CardHeader>
                     <CardContent>

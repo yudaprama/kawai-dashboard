@@ -17,7 +17,6 @@ interface AuthPayload {
 export default function AgentDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userWallet, setUserWallet] = useState<string | null>(null);
-  const [authToken, setAuthToken] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuthentication = () => {
@@ -31,7 +30,6 @@ export default function AgentDashboard() {
             // Decode the token to get user info
             const authPayload: AuthPayload = JSON.parse(Buffer.from(storedToken, 'base64').toString());
             setUserWallet(authPayload.wallet);
-            setAuthToken(storedToken);
             setIsAuthenticated(true);
           } catch (err) {
             console.error('Invalid token format:', err);
@@ -52,7 +50,6 @@ export default function AgentDashboard() {
   const handleLogout = () => {
     localStorage.removeItem('kawai_auth_token');
     localStorage.removeItem('kawai_auth_expiry');
-    setAuthToken(null);
     setUserWallet(null);
     setIsAuthenticated(false);
   };

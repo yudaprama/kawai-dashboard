@@ -36,7 +36,6 @@ export default function AgentLogin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [authToken, setAuthToken] = useState<string | null>(null);
 
   const KAWAI_TOKEN_ADDRESS = 'CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7';
 
@@ -48,7 +47,6 @@ export default function AgentLogin() {
     if (storedToken && storedExpiry) {
       const expiryTime = parseInt(storedExpiry);
       if (Date.now() < expiryTime) {
-        setAuthToken(storedToken);
         setIsAuthenticated(true);
       } else {
         // Clear expired token
@@ -143,7 +141,6 @@ export default function AgentLogin() {
       localStorage.setItem('kawai_auth_token', token);
       localStorage.setItem('kawai_auth_expiry', expiryTime.toString());
       
-      setAuthToken(token);
       setIsAuthenticated(true);
       
     } catch (err) {
@@ -157,7 +154,6 @@ export default function AgentLogin() {
   const handleLogout = () => {
     localStorage.removeItem('kawai_auth_token');
     localStorage.removeItem('kawai_auth_expiry');
-    setAuthToken(null);
     setIsAuthenticated(false);
   };
 
