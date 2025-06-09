@@ -53,3 +53,61 @@ export async function encryptKawaiiSession(): Promise<string> {
   // Convert to base64
   return btoa(String.fromCharCode(...combined));
 }
+
+// --- KAWAI Registration API helpers ---
+const KAWAI_AUTH_API_BASE = 'https://auth.getkawai.com';
+
+export interface KawaiRegistrationRequest {
+  address: string; // Simplified to just Solana address
+}
+
+export interface KawaiRegistrationResponse {
+  success: boolean;
+  message: string;
+  apiKey?: string;
+}
+
+export interface AddressExistsResponse {
+  exists: boolean;
+  message?: string;
+}
+
+export async function checkAddressExists(address: string): Promise<AddressExistsResponse> {
+  try {
+    const response = await fetch(`${KAWAI_AUTH_API_BASE}/address-exists?address=${encodeURIComponent(address)}`);
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to check address exists:', error);
+    return { exists: false, message: 'Failed to check address' };
+  }
+}
+
+export async function registerKawaiUser(solanaAddress: string): Promise<KawaiRegistrationResponse> {
+  try {
+    const session = await encryptKawaiiSession();
+    
+    const response = await fetch(`${KAWAI_AUTH_API_BASE}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Kawai-Session': session,
+      },
+      body: JSON.stringify({
+        address: solanaAddress, // Single address field
+      }),
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to register user:', error);
+    return { 
+      success: false, 
+      message: 'Failed to register user. Please try again.' 
+    };
+  }
+}
+
+// Remove the fake address generation function
+// This should be replaced with real KAWAI token account addresses
+
+// REMOVED: generateKawaiAddress function until we clarify what constitutes a valid KAWAI user address

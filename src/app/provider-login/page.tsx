@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { checkAddressExists, registerKawaiUser } from "@/lib/utils";
 
 const providerScreenshots = [
   '/kawai-provider/kawai-provider-1.png',
@@ -115,10 +116,26 @@ export default function ProviderLogin() {
     setError(null);
 
     try {
+      const solanaAddress = publicKey.toString();
+      
+      // Check if address exists and register if needed
+      const addressCheck = await checkAddressExists(solanaAddress);
+      
+      if (!addressCheck.exists) {
+        console.log('Registering new KAWAI user...');
+        const registrationResult = await registerKawaiUser(solanaAddress);
+        
+        if (!registrationResult.success) {
+          throw new Error(registrationResult.message);
+        }
+        
+        console.log('Registration successful:', registrationResult.message);
+      }
+
       // Create authentication message
       const timestamp = Date.now();
       const nonce = Math.random().toString(36).substring(2, 15);
-      const message = `Login to KAWAI Provider Dashboard\n\nWallet: ${publicKey.toString()}\nTimestamp: ${timestamp}\nNonce: ${nonce}\nRole: Provider`;
+      const message = `Login to KAWAI Provider Dashboard\n\nWallet: ${solanaAddress}\nTimestamp: ${timestamp}\nNonce: ${nonce}\nRole: Provider`;
       
       const encodedMessage = new TextEncoder().encode(message);
       const signature = await signMessage(encodedMessage);
@@ -126,9 +143,9 @@ export default function ProviderLogin() {
       // Convert signature to base64 for storage/transmission
       const signatureBase64 = Buffer.from(signature).toString('base64');
       
-      // Create a simple authentication token (in production, this should be validated by backend)
+      // Create authentication token
       const authPayload = {
-        wallet: publicKey.toString(),
+        wallet: solanaAddress,
         timestamp,
         nonce,
         signature: signatureBase64,
@@ -146,7 +163,7 @@ export default function ProviderLogin() {
       
     } catch (err) {
       console.error('Authentication failed:', err);
-      setError('Failed to authenticate. Please try again.');
+      setError(`Failed to authenticate: ${err instanceof Error ? err.message : 'Please try again.'}`);
     } finally {
       setIsAuthenticating(false);
     }

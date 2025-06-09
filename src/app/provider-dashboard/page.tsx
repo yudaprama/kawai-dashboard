@@ -105,7 +105,7 @@ export default function ProviderDashboard() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Provider:</span>
+              <span className="hidden sm:inline">Wallet:</span>
               <span className="font-mono text-xs">
                 {userWallet ? `${userWallet.slice(0, 4)}...${userWallet.slice(-4)}` : ''}
               </span>
