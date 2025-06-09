@@ -30,7 +30,8 @@ const agentScreenshots = [
 
 export default function AgentLogin() {
   const { publicKey, connected, signMessage } = useWallet();
-  const [hasEnoughTokens, setHasEnoughTokens] = useState<boolean | null>(null);
+  const [hasTokenAccount, setHasTokenAccount] = useState<boolean | null>(null);
+  const [tokenBalance, setTokenBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -38,7 +39,6 @@ export default function AgentLogin() {
   const [authToken, setAuthToken] = useState<string | null>(null);
 
   const KAWAI_TOKEN_ADDRESS = 'CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7';
-  const MINIMUM_TOKENS_REQUIRED = 100;
 
   // Check for existing session on component mount
   useEffect(() => {
@@ -59,9 +59,10 @@ export default function AgentLogin() {
   }, []);
 
   useEffect(() => {
-    const checkTokenBalance = async () => {
+    const checkTokenAccount = async () => {
       if (!publicKey) {
-        setHasEnoughTokens(null);
+        setHasTokenAccount(null);
+        setTokenBalance(0);
         return;
       }
 
@@ -85,21 +86,24 @@ export default function AgentLogin() {
           const balance = Number(kawaiTokenAccount.account.data.parsed.info.tokenAmount.amount);
           const decimals = kawaiTokenAccount.account.data.parsed.info.tokenAmount.decimals;
           const adjustedBalance = balance / Math.pow(10, decimals);
-          setHasEnoughTokens(adjustedBalance >= MINIMUM_TOKENS_REQUIRED);
+          setTokenBalance(adjustedBalance);
+          setHasTokenAccount(true);
         } else {
-          setHasEnoughTokens(false);
+          setTokenBalance(0);
+          setHasTokenAccount(false);
         }
       } catch (err) {
-        console.error('Failed to fetch KAWAI token balance:', err);
-        setError('Failed to verify token balance. Please try again later.');
-        setHasEnoughTokens(false);
+        console.error('Failed to check KAWAI token account:', err);
+        setError('Failed to verify token account. Please try again later.');
+        setHasTokenAccount(false);
+        setTokenBalance(0);
       } finally {
         setIsLoading(false);
       }
     };
 
     if (connected && publicKey) {
-      checkTokenBalance();
+      checkTokenAccount();
     }
   }, [publicKey, connected]);
 
@@ -230,7 +234,7 @@ export default function AgentLogin() {
                 {isLoading ? (
                   <div className="flex flex-col items-center my-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
-                    <p className="text-sm text-muted-foreground">Verifying KAWAI token balance...</p>
+                    <p className="text-sm text-muted-foreground">Verifying KAWAI token account...</p>
                   </div>
                 ) : error ? (
                   <Alert variant="destructive" className="w-full">
@@ -238,13 +242,13 @@ export default function AgentLogin() {
                     <AlertTitle>Error</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
-                ) : hasEnoughTokens === true ? (
+                ) : hasTokenAccount === true ? (
                   <>
                     <Alert variant="default" className="w-full bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700">
                       <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      <AlertTitle className="text-green-800 dark:text-green-300">✅ Token Balance Verified</AlertTitle>
+                      <AlertTitle className="text-green-800 dark:text-green-300">✅ KAWAI Token Account Found</AlertTitle>
                       <AlertDescription className="text-green-700 dark:text-green-400">
-                        You have the required KAWAI tokens to proceed.
+                        You have a KAWAI token account with {tokenBalance.toLocaleString()} tokens. You can proceed to authentication.
                       </AlertDescription>
                     </Alert>
 
@@ -297,9 +301,9 @@ export default function AgentLogin() {
                   <>
                     <Alert variant="destructive" className="w-full">
                       <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Insufficient KAWAI Balance</AlertTitle>
+                      <AlertTitle>No KAWAI Token Account Found</AlertTitle>
                       <AlertDescription>
-                        You need at least {MINIMUM_TOKENS_REQUIRED} KAWAI tokens to access the Agent Dashboard.
+                        You need to have a KAWAI token account to access the Agent Dashboard. Purchase some KAWAI tokens to create your account.
                       </AlertDescription>
                     </Alert>
                     <div className="flex flex-col space-y-2 w-full">

@@ -8,7 +8,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ExternalLink, AlertCircle, CheckCircle2, Expand } from "lucide-react";
+import { ExternalLink, AlertCircle, CheckCircle2, Expand, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -36,25 +36,40 @@ function getAuthUrl() {
 }
 
 export default function ProviderLogin() {
-  const { publicKey, connected } = useWallet();
-  const [hasEnoughTokens, setHasEnoughTokens] = useState<boolean | null>(null);
+  const { publicKey, connected, signMessage } = useWallet();
+  const [hasTokenAccount, setHasTokenAccount] = useState<boolean | null>(null);
+  const [tokenBalance, setTokenBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // New state for address existence and auth
-  const [addressExists, setAddressExists] = useState<null | boolean>(null);
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [password, setPassword] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
   const KAWAI_TOKEN_ADDRESS = 'CRonCzMtoLRHE6UsdpUCrm7nm7BwM3NfJU1ssVWAGBL7';
-  const MINIMUM_TOKENS_REQUIRED = 1000;
+
+  // Check for existing session on component mount
+  useEffect(() => {
+    const storedToken = localStorage.getItem('kawai_provider_auth_token');
+    const storedExpiry = localStorage.getItem('kawai_provider_auth_expiry');
+    
+    if (storedToken && storedExpiry) {
+      const expiryTime = parseInt(storedExpiry);
+      if (Date.now() < expiryTime) {
+        setAuthToken(storedToken);
+        setIsAuthenticated(true);
+      } else {
+        // Clear expired token
+        localStorage.removeItem('kawai_provider_auth_token');
+        localStorage.removeItem('kawai_provider_auth_expiry');
+      }
+    }
+  }, []);
 
   useEffect(() => {
-    const checkTokenBalance = async () => {
+    const checkTokenAccount = async () => {
       if (!publicKey) {
-        setHasEnoughTokens(null);
+        setHasTokenAccount(null);
+        setTokenBalance(0);
         return;
       }
 
@@ -78,82 +93,81 @@ export default function ProviderLogin() {
           const balance = Number(kawaiTokenAccount.account.data.parsed.info.tokenAmount.amount);
           const decimals = kawaiTokenAccount.account.data.parsed.info.tokenAmount.decimals;
           const adjustedBalance = balance / Math.pow(10, decimals);
-          setHasEnoughTokens(adjustedBalance >= MINIMUM_TOKENS_REQUIRED);
+          setTokenBalance(adjustedBalance);
+          setHasTokenAccount(true);
         } else {
-          setHasEnoughTokens(false);
+          setTokenBalance(0);
+          setHasTokenAccount(false);
         }
       } catch (err) {
-        console.error('Failed to fetch KAWAI token balance:', err);
-        setError('Failed to verify token balance. Please try again later.');
-        setHasEnoughTokens(false);
+        console.error('Failed to check KAWAI token account:', err);
+        setError('Failed to verify token account. Please try again later.');
+        setHasTokenAccount(false);
+        setTokenBalance(0);
       } finally {
         setIsLoading(false);
       }
     };
 
     if (connected && publicKey) {
-      checkTokenBalance();
+      checkTokenAccount();
     }
   }, [publicKey, connected]);
 
-  // Check if address exists after balance is sufficient
-  useEffect(() => {
-    if (hasEnoughTokens && publicKey) {
-      setAddressExists(null);
-      setError(null);
-      setIsLoading(true);
-      fetch(`${getAuthUrl()}/address-exists?address=${publicKey.toString()}`)
-        .then(res => res.json())
-        .then(data => {
-          setAddressExists(!!data.exists);
-          setShowAuthDialog(true);
-        })
-        .catch(() => setError("Failed to check address existence."))
-        .finally(() => setIsLoading(false));
+  const handleWalletLogin = async () => {
+    if (!publicKey || !signMessage) {
+      setError('Wallet not properly connected');
+      return;
     }
-  }, [hasEnoughTokens, publicKey]);
 
-  // Handle registration or login
-  async function handleAuthSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setAuthLoading(true);
-    setAuthError(null);
+    setIsAuthenticating(true);
+    setError(null);
+
     try {
-      if (!publicKey) throw new Error("No wallet address");
-      const address = publicKey.toString();
-      if (addressExists === false) {
-        // Register
-        const session = await encryptKawaiiSession();
-        const res = await fetch(`${getAuthUrl()}/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Kawai-Session': session,
-          },
-          body: JSON.stringify({ address, password }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Registration failed');
-        setShowAuthDialog(false);
-        window.location.href = "/provider-dashboard";
-      } else if (addressExists === true) {
-        // Login
-        const res = await fetch(`${getAuthUrl()}/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address, password }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Login failed');
-        setShowAuthDialog(false);
-        window.location.href = "/provider-dashboard";
-      }
-    } catch (err: unknown) {
-      setAuthError(err instanceof Error ? err.message : 'An unknown error occurred');
+      // Create authentication message
+      const timestamp = Date.now();
+      const nonce = Math.random().toString(36).substring(2, 15);
+      const message = `Login to KAWAI Provider Dashboard\n\nWallet: ${publicKey.toString()}\nTimestamp: ${timestamp}\nNonce: ${nonce}\nRole: Provider`;
+      
+      const encodedMessage = new TextEncoder().encode(message);
+      const signature = await signMessage(encodedMessage);
+
+      // Convert signature to base64 for storage/transmission
+      const signatureBase64 = Buffer.from(signature).toString('base64');
+      
+      // Create a simple authentication token (in production, this should be validated by backend)
+      const authPayload = {
+        wallet: publicKey.toString(),
+        timestamp,
+        nonce,
+        signature: signatureBase64,
+        role: 'provider'
+      };
+      
+      const token = Buffer.from(JSON.stringify(authPayload)).toString('base64');
+      
+      // Store authentication token with 24-hour expiry
+      const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+      localStorage.setItem('kawai_provider_auth_token', token);
+      localStorage.setItem('kawai_provider_auth_expiry', expiryTime.toString());
+      
+      setAuthToken(token);
+      setIsAuthenticated(true);
+      
+    } catch (err) {
+      console.error('Authentication failed:', err);
+      setError('Failed to authenticate. Please try again.');
     } finally {
-      setAuthLoading(false);
+      setIsAuthenticating(false);
     }
-  }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('kawai_provider_auth_token');
+    localStorage.removeItem('kawai_provider_auth_expiry');
+    setAuthToken(null);
+    setIsAuthenticated(false);
+  };
 
   return (
     <div className="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
@@ -204,21 +218,24 @@ export default function ProviderLogin() {
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
-            <h1 className="text-3xl font-bold">Provider Login</h1>
+            <h1 className="text-3xl font-bold">Login with Wallet</h1>
             <p className="text-balance text-muted-foreground">
-              Connect your wallet to launch a KAWAI node and earn rewards
+              Connect your wallet and authenticate to launch a KAWAI node and earn rewards
             </p>
           </div>
 
-          {/* Wallet Connection and Status */}
+          {/* Wallet Connection and Authentication Flow */}
           <div className="grid gap-4">
             {!connected ? (
               <div className="flex flex-col items-center gap-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  Step 1: Connect your Solana wallet
+                </p>
                 <WalletMultiButton className="w-full wallet-adapter-button-trigger" />
               </div>
             ) : (
               <div className="flex flex-col items-center gap-4">
-                <h3 className="text-lg font-semibold">Wallet Connected</h3>
+                <h3 className="text-lg font-semibold">✅ Wallet Connected</h3>
                 <p className="text-sm text-muted-foreground break-all w-full text-center">
                   {publicKey?.toString()}
                 </p>
@@ -226,7 +243,7 @@ export default function ProviderLogin() {
                 {isLoading ? (
                   <div className="flex flex-col items-center my-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
-                    <p className="text-sm text-muted-foreground">Checking status...</p>
+                    <p className="text-sm text-muted-foreground">Verifying KAWAI token account...</p>
                   </div>
                 ) : error ? (
                   <Alert variant="destructive" className="w-full">
@@ -234,23 +251,68 @@ export default function ProviderLogin() {
                     <AlertTitle>Error</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
-                ) : hasEnoughTokens === true ? (
+                ) : hasTokenAccount === true ? (
                   <>
                     <Alert variant="default" className="w-full bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700">
                       <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      <AlertTitle className="text-green-800 dark:text-green-300">Access Granted!</AlertTitle>
+                      <AlertTitle className="text-green-800 dark:text-green-300">✅ KAWAI Token Account Found</AlertTitle>
                       <AlertDescription className="text-green-700 dark:text-green-400">
-                        You have the required KAWAI tokens to launch a node. Please authenticate to continue.
+                        You have a KAWAI token account with {tokenBalance.toLocaleString()} tokens. You can proceed to launch a provider node.
                       </AlertDescription>
                     </Alert>
+
+                    {/* Authentication Step */}
+                    {!isAuthenticated ? (
+                      <div className="flex flex-col items-center gap-4 w-full">
+                        <p className="text-sm text-muted-foreground text-center">
+                          Step 2: Sign message to authenticate your wallet ownership
+                        </p>
+                        <Button 
+                          onClick={handleWalletLogin}
+                          disabled={isAuthenticating}
+                          className="w-full"
+                        >
+                          {isAuthenticating ? (
+                            <div className="flex items-center">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Authenticating...
+                            </div>
+                          ) : (
+                            <div className="flex items-center">
+                              <Key className="mr-2 h-4 w-4" />
+                              Sign Message to Login
+                            </div>
+                          )}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-4 w-full">
+                        <Alert variant="default" className="w-full bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700">
+                          <CheckCircle2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+                          <AlertTitle className="text-red-800 dark:text-red-300">🎉 Authentication Successful!</AlertTitle>
+                          <AlertDescription className="text-red-700 dark:text-red-400">
+                            Welcome! You are now authenticated and can access the Provider Dashboard to launch your node.
+                          </AlertDescription>
+                        </Alert>
+                        
+                        <div className="flex flex-col gap-2 w-full">
+                          <Link href="/provider-dashboard" className="w-full">
+                            <Button className="w-full">Continue to Provider Dashboard</Button>
+                          </Link>
+                          <Button variant="outline" onClick={handleLogout} className="w-full">
+                            Logout
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
                     <Alert variant="destructive" className="w-full">
                       <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Insufficient KAWAI Balance</AlertTitle>
+                      <AlertTitle>No KAWAI Token Account Found</AlertTitle>
                       <AlertDescription>
-                        You need at least {MINIMUM_TOKENS_REQUIRED} KAWAI tokens to launch a node and become a provider.
+                        You need to have a KAWAI token account to launch a provider node. Purchase some KAWAI tokens to create your account.
                       </AlertDescription>
                     </Alert>
                     <div className="flex flex-col space-y-2 w-full">
@@ -279,30 +341,6 @@ export default function ProviderLogin() {
                     </div>
                   </>
                 )}
-
-                {/* Auth Dialog for Register/Login */}
-                <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-                  <DialogContent className="max-w-sm w-full">
-                    <form onSubmit={handleAuthSubmit} className="space-y-4">
-                      <h2 className="text-xl font-bold text-center">
-                        {addressExists === false ? 'Register' : addressExists === true ? 'Login' : 'Authenticate'}
-                      </h2>
-                      <Input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        required
-                        autoFocus
-                        disabled={authLoading}
-                      />
-                      {authError && <div className="text-red-500 text-sm text-center">{authError}</div>}
-                      <Button type="submit" className="w-full" disabled={authLoading || !password}>
-                        {authLoading ? 'Processing...' : addressExists === false ? 'Register' : 'Login'}
-                      </Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
               </div>
             )}
           </div>
